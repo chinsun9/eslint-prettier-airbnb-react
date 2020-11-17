@@ -75,6 +75,22 @@ select trailing_comma_pref in "none" "es5" "all"; do
 done
 echo
 
+
+# Checks for existing prettierrc files
+if [ -f ".prettierrc.js" -o -f "prettier.config.js" -o -f ".prettierrc.yaml" -o -f ".prettierrc.yml" -o -f ".prettierrc.json" -o -f ".prettierrc.toml" -o -f ".prettierrc" ]; then
+  echo -e "${RED}Existing Prettier config file(s) found${NC}"
+  ls -a | grep "prettier*" | xargs -n 1 basename
+  echo
+  echo -e "${RED}CAUTION:${NC} The configuration file will be resolved starting from the location of the file being formatted, and searching up the file tree until a config file is (or isn't) found. https://prettier.io/docs/en/configuration.html"
+  echo
+  read -p  "Write .prettierrc${config_extension} (Y/n)? "
+  if [[ $REPLY =~ ^[Nn]$ ]]; then
+    echo -e "${YELLOW}>>>>> Skipping Prettier config${NC}"
+    skip_prettier_setup="true"
+  fi
+  echo
+fi
+
 # ----------------------
 # Perform Configuration
 # ----------------------
@@ -197,7 +213,8 @@ else
       {
         "trailingComma": "'${trailing_comma_pref}'",
         "singleQuote": true,
-        "printWidth": '${max_len_val}'
+        "printWidth": '${max_len_val}',
+        "endOfLine": "auto"
       }
     ],
     "jsx-a11y/href-no-hash": "off",
@@ -217,6 +234,22 @@ else
   ]
 }' >> .eslintrc${config_extension}
 fi
+
+
+
+if [ "$skip_prettier_setup" == "true" ]; then
+  break
+else
+  echo -e "5/5 ${YELLOW}Building your .prettierrc${config_extension} file... ${NC}"
+  > .prettierrc${config_extension} # truncates existing file (or creates empty)
+
+  echo ${config_opening}'
+  "printWidth": '${max_len_val}',
+  "singleQuote": true,
+  "trailingComma": "'${trailing_comma_pref}'"
+}' >> .prettierrc${config_extension}
+fi
+
 
 echo
 echo -e "${GREEN}Finished setting up!${NC}"
